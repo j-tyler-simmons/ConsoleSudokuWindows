@@ -4,6 +4,7 @@ using std::string;
 using std::cin;
 using std::cout;
 using std::endl;
+using std::round;
 
 class GameBoard {
 	public:
@@ -19,7 +20,7 @@ class GameBoard {
 		//copy assignment operator
 		GameBoard& operator=(GameBoard& rhs);
 
-		//cell accessors
+		//accessors
 		Cell getGameCell(const int xPos, const int yPos);
 		int getGameCellValue(const int xPos, const int yPos) const;
 		int getGameCellCorrectValue(const int xPos, const int yPos) const;
@@ -29,6 +30,7 @@ class GameBoard {
 		int getHiLightY() const;
 		double getNumFilled() const;
 		double getNumBoard() const;
+		int getNumSolutions() const;
 
 		void setGameCellValue(const int xPos, const int yPos, const int value);
 		void setGameCellCorrectValue(const int xPos, const int yPos, const int value);
@@ -38,15 +40,18 @@ class GameBoard {
 		void setHiLightY(const int yPos);
 		void setNumFilled(const double num);
 		void setNumBoard(const double num);
+		void setNumSolutions(const int solutions);
 
 		//public member functions
 		void displayBoard();
 		void clearHiLightStr(const int xPos, const int yPos);
 		void setHiLightStr(const int xPos, const int yPos);
-		bool checkValidMove(const char* input);
-		void genFullBoard();
+		bool checkValidMove(int input);
+		void genFullBoard(int cluesToKeep);
 		void makePuzzle(int fixedCount);
 		void updateStats();
+		void countSolutions(int maxSolutions);
+		bool countSolutionsRecursive(int& numSolutions, int maxSolutions);
 		//bool solve();
 
 	private:
@@ -56,11 +61,12 @@ class GameBoard {
 		int mHiLightY;
 		double mNumFilled;
 		double mNumBoard;
+		int mNumSolutions;
 
 		//private member functions
 		bool isNumSafe(int row, int col, int num);
 		void shuffleNumbers(int arr[]);
-		bool fillBoardRecursive(int row, int col);
+		bool fillBoardRecursive();
 		int getProgress();
 		void printProgress(int percent, int width);
 		void setFixedNums();

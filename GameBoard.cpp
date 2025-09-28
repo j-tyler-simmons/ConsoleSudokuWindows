@@ -19,6 +19,9 @@ GameBoard::GameBoard()
     //set num filled and num board
     this->mNumFilled = 0;
     this->mNumBoard = 9 * 9;
+
+    //set num solutions
+    this->mNumSolutions = 0;
 }
 
 GameBoard::GameBoard(GameBoard& newBoard)
@@ -36,6 +39,7 @@ GameBoard::GameBoard(GameBoard& newBoard)
     this->mHiLightY = newBoard.getHiLightY();
     this->mNumFilled = newBoard.getNumFilled();
     this->mNumBoard = newBoard.getNumBoard();
+    this->mNumSolutions = newBoard.getNumSolutions();
 }
 
 GameBoard& GameBoard::operator=(GameBoard& rhs)
@@ -53,6 +57,7 @@ GameBoard& GameBoard::operator=(GameBoard& rhs)
     this->mHiLightY = rhs.getHiLightY();
     this->mNumFilled = rhs.getNumFilled();
     this->mNumBoard = rhs.getNumBoard();
+    this->mNumSolutions = rhs.getNumSolutions();
 
 	return *this;
 }
@@ -104,6 +109,11 @@ double GameBoard::getNumBoard() const
     return this->mNumBoard;
 }
 
+int GameBoard::getNumSolutions() const
+{
+    return this->mNumSolutions;
+}
+
 void GameBoard::setGameCellValue(const int xPos, const int yPos, const int value)
 {
 	this->mGameCells[yPos][xPos].setValue(value);
@@ -144,6 +154,11 @@ void GameBoard::setNumBoard(const double num)
     this->mNumBoard = num;
 }
 
+void GameBoard::setNumSolutions(const int solutions)
+{
+    this->mNumBoard = solutions;
+}
+
 void GameBoard::displayBoard()
 {
     const char* topBorder = u8"  ╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗";
@@ -164,16 +179,15 @@ void GameBoard::displayBoard()
         for (col = 0; col < 9; ++col) {
             val = this->mGameCells[row][col].getValue();
             cout << this->mGameCells[row][col].getHiLightStr();
-
-            cout << " ";
+            
             if (this->mGameCells[row][col].getIsFixed() == true) {
                 cout << "\x1b[32m";
-                cout << this->mGameCells[row][col].getValue();
-                cout << "\x1b[0m";
             }
-            else {
-                std::cout << (val == 0 ? '.' : static_cast<char>('0' + val));   //solves issue of 46 being printed
-            }
+
+            cout << " ";
+            
+            cout << (val == 0 ? '.' : static_cast<char>('0' + val));   //solves issue of 46 being printed
+
             cout << " ";
             cout << "\x1b[0m";
             if (col == 8)
@@ -208,30 +222,43 @@ void GameBoard::setHiLightStr(const int xPos, const int yPos)
     this->mGameCells[yPos][xPos].setHiLightStr("\x1b[7m");
 }
 
-bool GameBoard::checkValidMove(const char* input)
+bool GameBoard::checkValidMove(int input)
 {
-    int numEntered = atoi(input);
+    bool testMove = false;
 
-    if (numEntered > 0 && numEntered < 10) {
-        this->mGameCells[this->mHiLightY][this->mHiLightX].setValue(numEntered);
+    if (this->mGameCells[this->mHiLightY][this->mHiLightX].getIsFixed() == false) {
+        this->mGameCells[this->mHiLightY][this->mHiLightX].setValue(input - '0');
+        testMove = true;
     }
-    return false;
+
+    return testMove;
 }
 
-void GameBoard::genFullBoard()
+void GameBoard::genFullBoard(int cluesToKeep)
 {
-    int size = 9,
-        i = 0,
-        j = 0;
+    fillBoardRecursive(); // Fill the board fully
 
-    //Clear all mCorrect values
-    for (i = 0; i < size; i++) {
-        for (j = 0; j < size; j++) {
-            this->mGameCells[i][j].setCorrectValue(0);
+    // Randomly remove cells
+    int removed = 0;
+    while (removed < (81 - cluesToKeep)) {
+        int row = rand() % 9;
+        int col = rand() % 9;
+
+        if (mGameCells[row][col].getValue() != 0) {
+            mGameCells[row][col].setValue(0);
+            mGameCells[row][col].setIsFixed(false);
+            ++removed;
         }
     }
 
-    fillBoardRecursive(0, 0);
+    // Mark remaining values as fixed clues
+    for (int i = 0; i < 9; ++i) {
+        for (int j = 0; j < 9; ++j) {
+            if (mGameCells[i][j].getValue() != 0) {
+                mGameCells[i][j].setIsFixed(true);
+            }
+        }
+    }
 }
 
 void GameBoard::makePuzzle(int fixedCount)
@@ -240,16 +267,22 @@ void GameBoard::makePuzzle(int fixedCount)
         row = 0,
         col = 0,
         size = 9;
+    do {
+        row = 0;
+        col = 0;
+        placed = 0;
 
-    while (placed < fixedCount) {
-        int row = rand() % size;
-        int col = rand() % size;
+        while (placed < fixedCount) {
+            int row = rand() % size;
+            int col = rand() % size;
 
-        if (!this->mGameCells[row][col].getIsFixed()) {
-            this->mGameCells[row][col].setIsFixed(true);
-            ++placed;
+            if (!this->mGameCells[row][col].getIsFixed()) {
+                this->mGameCells[row][col].setIsFixed(true);
+                ++placed;
+            }
         }
-    }
+        this->countSolutions(1);
+    } while (this->getNumSolutions() != 1);
 
     //set fixed numbers so they display correctly on board
     this->setFixedNums();
@@ -257,26 +290,25 @@ void GameBoard::makePuzzle(int fixedCount)
 
 bool GameBoard::isNumSafe(int row, int col, int num)
 {
-    bool safetyTest = true;
-    int startRow = row - row % 3;
-    int startCol = col - col % 3;
-    int i = 0, j = 0, x = 0;
+    // Check the row and column
+    for (int i = 0; i < 9; ++i) {
+        if (mGameCells[row][i].getValue() == num) return false;
+        if (mGameCells[i][col].getValue() == num) return false;
+    }
 
-    for (x = 0; x < 9; x++) {
-        if (this->mGameCells[row][x].getCorrectValue() == num || this->mGameCells[x][col].getCorrectValue() == num) {
-            safetyTest = false;
+    // Check the 3x3 box
+    int boxStartRow = row - row % 3;
+    int boxStartCol = col - col % 3;
+
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            int r = boxStartRow + i;
+            int c = boxStartCol + j;
+            if (mGameCells[r][c].getValue() == num) return false;
         }
     }
 
-    for (i = 0; i < 3; i++) {
-        for (j = 0; j < 3; j++) {
-            if (this->mGameCells[startRow + i][startCol + j].getCorrectValue() == num) {
-                safetyTest = false;
-            }
-        }
-    }
-
-    return safetyTest;
+    return true; // No conflicts found
 }
 
 void GameBoard::shuffleNumbers(int arr[])
@@ -294,44 +326,51 @@ void GameBoard::shuffleNumbers(int arr[])
     }
 }
 
-bool GameBoard::fillBoardRecursive(int row, int col)
+bool GameBoard::fillBoardRecursive()
 {
-    int nums[9] = { 0 };
-    int i = 0,
-        num = 0;
+    int row = -1, col = -1;
+    bool found = false;
 
-    if (row == 9) {
-        return true; // Entire board filled
-    }
-
-    // Move to next row if at end of column
-    if (col == 9) {
-        return fillBoardRecursive(++row, 0);
-    }
-
-    if (this->mGameCells[row][col].getCorrectValue() != 0) {
-        // Already filled (should not happen in generation, but just in case)
-        return fillBoardRecursive(row, ++col);
-    }
-
-    for (i = 0; i < 9; ++i) {
-        nums[i] = i + 1;
-    }
-
-    this->shuffleNumbers(nums); // Shuffle numbers 1-9
-
-    for (i = 0; i < 9; ++i) {
-        num = nums[i];
-        if (this->isNumSafe(row, col, num)) {
-            this->mGameCells[row][col].setCorrectValue(num);
-            if (fillBoardRecursive(row, ++col)) {
-                return true;
+    // Find the next empty cell (value == 0)
+    for (int i = 0; i < 9 && !found; ++i) {
+        for (int j = 0; j < 9 && !found; ++j) {
+            if (mGameCells[i][j].getValue() == 0) {
+                row = i;
+                col = j;
+                found = true;
             }
-            this->mGameCells[row][col].setCorrectValue(0); // Backtrack
         }
     }
 
-    return false; //No valid number found, trigger backtracking
+    if (!found)
+        return true; // All cells filled successfully
+
+    // Generate shuffled numbers 1–9 manually
+    int numbers[9] = { 1,2,3,4,5,6,7,8,9 };
+
+    // Fisher-Yates shuffle (manual swap)
+    for (int i = 8; i > 0; --i) {
+        int j = rand() % (i + 1);
+        int temp = numbers[i];
+        numbers[i] = numbers[j];
+        numbers[j] = temp;
+    }
+
+    // Try each number in random order
+    for (int i = 0; i < 9; ++i) {
+        int num = numbers[i];
+
+        if (isNumSafe(row, col, num)) {
+            mGameCells[row][col].setValue(num);
+
+            if (fillBoardRecursive())
+                return true;
+
+            mGameCells[row][col].setValue(0); // Backtrack
+        }
+    }
+
+    return false; // Trigger backtracking
 }
 
 int GameBoard::getProgress()
@@ -377,6 +416,45 @@ void GameBoard::updateStats()
     percentComp = this->getProgress();
 
     this->printProgress(percentComp, 30);
+
+    if (round(percentComp) == 100) {
+        cout << "test" << endl;
+    }
+}
+
+void GameBoard::countSolutions(int maxSolutions)
+{
+    mNumSolutions = 0;
+
+    countSolutionsRecursive(mNumSolutions, maxSolutions);
+}
+
+bool GameBoard::countSolutionsRecursive(int& numSolutions, int maxSolutions)
+{
+    if (numSolutions >= maxSolutions)
+        return false;
+
+    for (int row = 0; row < 9; ++row) {
+        for (int col = 0; col < 9; ++col) {
+            if (!mGameCells[row][col].getIsFixed() && mGameCells[row][col].getValue() == 0) {
+                for (int num = 1; num <= 9; ++num) {
+                    if (isNumSafe(row, col, num)) {
+                        mGameCells[row][col].setValue(num);
+
+                        if (countSolutionsRecursive(numSolutions, maxSolutions))
+                            return true;
+
+                        mGameCells[row][col].setValue(0); // backtrack
+                    }
+                }
+                return false; // No valid number, backtrack
+            }
+        }
+    }
+
+    // All cells are filled, solution found
+    numSolutions++;
+    return false; // Continue to count more solutions
 }
 
 void GameBoard::setFixedNums()

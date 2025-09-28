@@ -16,5 +16,6 @@ class Game {
 		bool mExitGame;
 
 		//private member functions
-		void move();
+		void parseMove();
+		void move(char moveEvent);
 };
