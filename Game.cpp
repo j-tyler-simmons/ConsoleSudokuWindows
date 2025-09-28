@@ -5,11 +5,13 @@ void Game::run()
 {
 	this->mBoard.genFullBoard();
 	this->mBoard.makePuzzle(40);	//set to 40 initially for an easy puzzle
+	this->mBoard.updateStats();
 	this->mBoard.displayBoard();
 
 	while (this->mExitGame != true) {
 		cout << "\x1b[H";
 		this->move();
+		this->mBoard.updateStats();
 		this->mBoard.displayBoard();
 	}
 }

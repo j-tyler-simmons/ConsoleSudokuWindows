@@ -11,10 +11,14 @@ GameBoard::GameBoard()
 	}
 
     //set top left cell to be highlighted
-    this->mGameCells[0][0].setHiLightStr("\033[7m");
+    this->mGameCells[0][0].setHiLightStr("\x1b[7m");
 
     this->mHiLightX = 0;
     this->mHiLightY = 0;
+
+    //set num filled and num board
+    this->mNumFilled = 0;
+    this->mNumBoard = 9 * 9;
 }
 
 GameBoard::GameBoard(GameBoard& newBoard)
@@ -27,6 +31,11 @@ GameBoard::GameBoard(GameBoard& newBoard)
 			this->mGameCells[i][j].setIsFixed(newBoard.getGameCell(i, j).getIsFixed());
 		}
 	}
+
+    this->mHiLightX = newBoard.getHiLightX();
+    this->mHiLightY = newBoard.getHiLightY();
+    this->mNumFilled = newBoard.getNumFilled();
+    this->mNumBoard = newBoard.getNumBoard();
 }
 
 GameBoard& GameBoard::operator=(GameBoard& rhs)
@@ -39,6 +48,11 @@ GameBoard& GameBoard::operator=(GameBoard& rhs)
 			this->mGameCells[i][j].setIsFixed(rhs.getGameCell(i, j).getIsFixed());
 		}
 	}
+
+    this->mHiLightX = rhs.getHiLightX();
+    this->mHiLightY = rhs.getHiLightY();
+    this->mNumFilled = rhs.getNumFilled();
+    this->mNumBoard = rhs.getNumBoard();
 
 	return *this;
 }
@@ -80,6 +94,16 @@ int GameBoard::getHiLightY() const
     return this->mHiLightY;
 }
 
+double GameBoard::getNumFilled() const
+{
+    return this->mNumFilled;
+}
+
+double GameBoard::getNumBoard() const
+{
+    return this->mNumBoard;
+}
+
 void GameBoard::setGameCellValue(const int xPos, const int yPos, const int value)
 {
 	this->mGameCells[yPos][xPos].setValue(value);
@@ -110,6 +134,16 @@ void GameBoard::setHiLightY(const int yPos)
     this->mHiLightY = yPos;
 }
 
+void GameBoard::setNumFilled(const double num)
+{
+    this->mNumFilled = num;
+}
+
+void GameBoard::setNumBoard(const double num)
+{
+    this->mNumBoard = num;
+}
+
 void GameBoard::displayBoard()
 {
     const char* topBorder = u8"  ╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗";
@@ -121,7 +155,6 @@ void GameBoard::displayBoard()
         row = 0,
         col = 0;
 
-
     cout << u8"\n    1   2   3   4   5   6   7   8   9" << endl;
     cout << topBorder << endl;
 
@@ -129,15 +162,20 @@ void GameBoard::displayBoard()
         cout << row + 1 << u8" ║";
 
         for (col = 0; col < 9; ++col) {
-            if (this->mGameCells[row][col].getIsFixed() == true) {
-                this->mGameCells[row][col].setValue(this->mGameCells[row][col].getCorrectValue());
-            }
             val = this->mGameCells[row][col].getValue();
             cout << this->mGameCells[row][col].getHiLightStr();
+
             cout << " ";
-            std::cout << (val == 0 ? '.' : static_cast<char>('0' + val));   //solves issue of 46 being printed
+            if (this->mGameCells[row][col].getIsFixed() == true) {
+                cout << "\x1b[32m";
+                cout << this->mGameCells[row][col].getValue();
+                cout << "\x1b[0m";
+            }
+            else {
+                std::cout << (val == 0 ? '.' : static_cast<char>('0' + val));   //solves issue of 46 being printed
+            }
             cout << " ";
-            cout << "\033[0m";
+            cout << "\x1b[0m";
             if (col == 8)
                 cout << u8"║";
             else if ((col + 1) % 3 == 0)
@@ -157,17 +195,17 @@ void GameBoard::displayBoard()
             cout << midSeparator << endl;
         }
     }
-
+    
 }
 
 void GameBoard::clearHiLightStr(const int xPos, const int yPos)
 {
-    this->mGameCells[yPos][xPos].setHiLightStr("\033[0m");
+    this->mGameCells[yPos][xPos].setHiLightStr("\x1b[0m");
 }
 
 void GameBoard::setHiLightStr(const int xPos, const int yPos)
 {
-    this->mGameCells[yPos][xPos].setHiLightStr("\033[7m");
+    this->mGameCells[yPos][xPos].setHiLightStr("\x1b[7m");
 }
 
 bool GameBoard::checkValidMove(const char* input)
@@ -212,6 +250,9 @@ void GameBoard::makePuzzle(int fixedCount)
             ++placed;
         }
     }
+
+    //set fixed numbers so they display correctly on board
+    this->setFixedNums();
 }
 
 bool GameBoard::isNumSafe(int row, int col, int num)
@@ -290,5 +331,68 @@ bool GameBoard::fillBoardRecursive(int row, int col)
         }
     }
 
-    return false; // No valid number found, trigger backtracking
+    return false; //No valid number found, trigger backtracking
 }
+
+int GameBoard::getProgress()
+{
+    int row = 0,
+        col = 0;
+
+    for (row = 0; row < 9; ++row) {
+        for (col = 0; col < 9; ++col) {
+            if (this->mGameCells[row][col].getValue() != 0) {
+                this->setNumFilled(this->getNumFilled() + 1.0);
+            }
+        }
+    }
+
+    return (int)((this->getNumFilled()/this->getNumBoard()) * 100);
+}
+
+void GameBoard::printProgress(int percent, int width)
+{
+    int i = 0,
+        filled = (percent * width) / 100;
+
+    cout << "[";
+
+    for (i = 0; i < width; ++i) {
+
+        if (i < filled) {
+            cout << u8"█";
+        }
+        else {
+            cout << " ";
+        }
+    }
+    cout << "] " << percent << "%\r";
+}
+
+void GameBoard::updateStats()
+{
+    int percentComp = 0;
+    this->setNumFilled(0);
+
+    percentComp = this->getProgress();
+
+    this->printProgress(percentComp, 30);
+}
+
+void GameBoard::setFixedNums()
+{
+    int row = 0,
+        col = 0;
+
+    for (row = 0; row < 9; ++row) {
+        for (col = 0; col < 9; ++col) {
+            if (this->mGameCells[row][col].getIsFixed() == true) {
+                this->mGameCells[row][col].setValue(this->mGameCells[row][col].getCorrectValue());
+            }
+        }
+    }
+}
+
+
+
+

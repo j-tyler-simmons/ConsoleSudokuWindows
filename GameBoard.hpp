@@ -27,6 +27,8 @@ class GameBoard {
 		bool getIsCellCorrect(const int xPos, const int yPos) const;
 		int getHiLightX() const;
 		int getHiLightY() const;
+		double getNumFilled() const;
+		double getNumBoard() const;
 
 		void setGameCellValue(const int xPos, const int yPos, const int value);
 		void setGameCellCorrectValue(const int xPos, const int yPos, const int value);
@@ -34,6 +36,8 @@ class GameBoard {
 		void makeCellCorrect(const int xPos, const int yPos);
 		void setHiLightX(const int xPos);
 		void setHiLightY(const int yPos);
+		void setNumFilled(const double num);
+		void setNumBoard(const double num);
 
 		//public member functions
 		void displayBoard();
@@ -42,6 +46,7 @@ class GameBoard {
 		bool checkValidMove(const char* input);
 		void genFullBoard();
 		void makePuzzle(int fixedCount);
+		void updateStats();
 		//bool solve();
 
 	private:
@@ -49,9 +54,14 @@ class GameBoard {
 		Cell mGameCells[9][9];
 		int mHiLightX;
 		int mHiLightY;
+		double mNumFilled;
+		double mNumBoard;
 
 		//private member functions
 		bool isNumSafe(int row, int col, int num);
 		void shuffleNumbers(int arr[]);
 		bool fillBoardRecursive(int row, int col);
-};
+		int getProgress();
+		void printProgress(int percent, int width);
+		void setFixedNums();
+};		
