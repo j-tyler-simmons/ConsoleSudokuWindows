@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 using std::string;
 
@@ -5,9 +6,9 @@ class Cell {
 	public:
 		//constructor
 		Cell(int newVal = 0, int newCorrectVal = 0, bool newFixedness = false, string newStr = "\033[0m",
-			bool newCorrectness = false)
+			bool newCorrectness = false, bool newWrongness = false)
 			: mValue(newVal), mIsFixed(newFixedness), mHiLightStr(newStr), mCorrectValue(newCorrectVal),
-				mIsCorrect(newCorrectness) {}
+				mIsCorrect(newCorrectness), mIsWrong(newWrongness){}
 
 		//destructor
 		virtual ~Cell() {}
@@ -23,6 +24,7 @@ class Cell {
 		int getCorrectValue() const;
 		bool getIsFixed() const;
 		bool getIsCorrect() const;
+		bool getIsWrong() const;
 		string getHiLightStr() const;
 
 		void setValue(const int newVal);
@@ -30,6 +32,7 @@ class Cell {
 		void setIsFixed(const bool newFixedness);
 		void setIsCorrect(const bool newCorrectness);
 		void setHiLightStr(const string& newStr);
+		void setIsWrong(bool newWrongness);
 
 	private:
 		//data members
@@ -37,5 +40,6 @@ class Cell {
 		int mCorrectValue;
 		bool mIsFixed;
 		bool mIsCorrect;
+		bool mIsWrong;
 		string mHiLightStr;
 };

@@ -3,17 +3,14 @@
 
 void Game::run()
 {
-	this->mBoard.genFullBoard(40);
-	//this->mBoard.makePuzzle(40);	//set to 40 initially for an easy puzzle
-	this->mBoard.updateStats();
-	this->mBoard.displayBoard();
+	int startMenuChoice = 0;
 
-	while (this->mExitGame != true) {
-		cout << "\x1b[H";
-		this->parseMove();
-		this->mBoard.updateStats();
-		this->mBoard.displayBoard();
-	}
+	system("cls");
+
+	//start menu stuff
+	this->setupStartMenu();
+	startMenuChoice = this->mStartMenu.scroll(20, 2);
+	this->EvaluateStartMenuChoice(startMenuChoice);
 }
 
 void Game::parseMove()
@@ -55,6 +52,7 @@ void Game::parseMove()
 		}
 		else if (moveEventch == '\b' && this->mBoard.getIsCellFixed(this->mBoard.getHiLightX(), this->mBoard.getHiLightY()) == false) {
 			this->mBoard.setGameCellValue(this->mBoard.getHiLightX(), this->mBoard.getHiLightY(), 0);
+			this->mBoard.makeCellWrong(this->mBoard.getHiLightX(), this->mBoard.getHiLightY());
 		}
 	}
 }
@@ -104,4 +102,71 @@ void Game::move(char moveEvent)
 	else {
 		//do nothing
 	}
+}
+
+void Game::setupStartMenu()
+{
+	string optionArray[10] = {"Start Game", "Show Rules", "Load Settings (to do)", "Exit", 
+		"", "", "", "", "", ""};
+
+	this->mStartMenu.~Menu();
+	this->mStartMenu.setOptions(optionArray);
+	this->mStartMenu.setupMenu();
+}
+
+void Game::EvaluateStartMenuChoice(int choice)
+{
+	switch (choice) {
+		case 1:
+			this->runGame();
+			break;
+		case 2:
+			this->printRules();
+			break;
+		case 3:
+			break;
+		case 4:
+			this->mExitGame = true;
+			break;
+	}
+}
+
+void Game::runGame()
+{
+	system("cls");
+
+	this->mBoard.genFullBoard(40);
+	this->mBoard.updateStats();
+	this->mBoard.displayBoard();
+
+	while (this->mExitGame != true) {
+		cout << "\x1b[H";
+		this->parseMove();
+		this->mBoard.updateStats();
+		this->mBoard.displayBoard();
+	}
+}
+
+void Game::printRules()
+{
+	system("cls");
+
+	cout << "The rules of Sudoku are to fill a 9x9 grid with numbers from 1 to 9 so that each row, each column, and" << endl;
+	cout << "each of the nine 3x3 subgrids contains each digit exactly once.This means no number can be repeated in" << endl; 
+	cout << "any row, column, or 3x3 box.The game is won when the entire grid is correctly filled." << endl << endl;
+
+	cout << "[Press any key to return to the start menu...]";
+	_getch();
+	
+	this->recallAfterRules();
+}
+
+void Game::recallAfterRules()
+{
+	int startMenuChoice = 0;
+
+	system("cls");
+
+	startMenuChoice = this->mStartMenu.scroll(20, 2);
+	this->EvaluateStartMenuChoice(startMenuChoice);
 }

@@ -6,6 +6,8 @@ Cell::Cell(Cell& newCell)
 	this->mCorrectValue = newCell.getCorrectValue();
 	this->mIsFixed = newCell.getIsFixed();
 	this->mHiLightStr = newCell.getHiLightStr();
+	this->mIsCorrect = newCell.getIsCorrect();
+	this->mIsWrong = newCell.getIsWrong();
 }
 
 Cell& Cell::operator=(Cell& rhs)
@@ -14,6 +16,8 @@ Cell& Cell::operator=(Cell& rhs)
 	this->mCorrectValue = rhs.getCorrectValue();
 	this->mIsFixed = rhs.getIsFixed();
 	this->mHiLightStr = rhs.getHiLightStr();
+	this->mIsCorrect = rhs.getIsCorrect();
+	this->mIsWrong = rhs.getIsWrong();
 
 	return *this;
 }
@@ -36,6 +40,11 @@ bool Cell::getIsFixed() const
 bool Cell::getIsCorrect() const
 {
 	return this->mIsCorrect;
+}
+
+bool Cell::getIsWrong() const
+{
+	return this->mIsWrong;
 }
 
 string Cell::getHiLightStr() const
@@ -66,4 +75,9 @@ void Cell::setIsCorrect(const bool newCorrectness)
 void Cell::setHiLightStr(const string& newStr)
 {
 	this->mHiLightStr = newStr;
+}
+
+void Cell::setIsWrong(bool newWrongness)
+{
+	this->mIsWrong = newWrongness;
 }

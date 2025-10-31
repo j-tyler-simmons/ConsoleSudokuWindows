@@ -89,6 +89,11 @@ bool GameBoard::getIsCellCorrect(const int xPos, const int yPos) const
     return this->mGameCells[yPos][xPos].getIsCorrect();
 }
 
+bool GameBoard::getIsCellWrong(const int xPos, const int yPos) const
+{
+    return this->mGameCells[yPos][xPos].getIsWrong();
+}
+
 int GameBoard::getHiLightX() const
 {
     return this->mHiLightX;
@@ -159,6 +164,11 @@ void GameBoard::setNumSolutions(const int solutions)
     this->mNumBoard = solutions;
 }
 
+void GameBoard::makeCellWrong(const int xPos, const int yPos)
+{
+    this->mGameCells[yPos][xPos].setIsWrong(true);
+}
+
 void GameBoard::displayBoard()
 {
     const char* topBorder = u8"  ╔═══╤═══╤═══╦═══╤═══╤═══╦═══╤═══╤═══╗";
@@ -181,7 +191,7 @@ void GameBoard::displayBoard()
             cout << this->mGameCells[row][col].getHiLightStr();
             
             if (this->mGameCells[row][col].getIsFixed() == true) {
-                cout << "\x1b[32m";
+                cout << "\x1b[33m";     //yellow text escape code
             }
 
             cout << " ";
@@ -362,7 +372,7 @@ bool GameBoard::fillBoardRecursive()
 
         if (isNumSafe(row, col, num)) {
             mGameCells[row][col].setValue(num);
-
+            mGameCells[row][col].setCorrectValue(num);
             if (fillBoardRecursive())
                 return true;
 
@@ -376,7 +386,8 @@ bool GameBoard::fillBoardRecursive()
 int GameBoard::getProgress()
 {
     int row = 0,
-        col = 0;
+        col = 0,
+        numFixed = 81 - 40;
 
     for (row = 0; row < 9; ++row) {
         for (col = 0; col < 9; ++col) {
@@ -386,7 +397,7 @@ int GameBoard::getProgress()
         }
     }
 
-    return (int)((this->getNumFilled()/this->getNumBoard()) * 100);
+    return (int)(((this->getNumFilled() - 40)/(this->getNumBoard() - 40)) * 100);
 }
 
 void GameBoard::printProgress(int percent, int width)
@@ -394,7 +405,7 @@ void GameBoard::printProgress(int percent, int width)
     int i = 0,
         filled = (percent * width) / 100;
 
-    cout << "[";
+    cout << "Progress: [";
 
     for (i = 0; i < width; ++i) {
 
@@ -405,7 +416,7 @@ void GameBoard::printProgress(int percent, int width)
             cout << " ";
         }
     }
-    cout << "] " << percent << "%\r";
+    cout << "] " << percent << "%" << endl;
 }
 
 void GameBoard::updateStats()
@@ -413,12 +424,17 @@ void GameBoard::updateStats()
     int percentComp = 0;
     this->setNumFilled(0);
 
+    cout << "\x1b[H";
+
     percentComp = this->getProgress();
 
     this->printProgress(percentComp, 30);
 
     if (round(percentComp) == 100) {
-        cout << "test" << endl;
+        this->checkPlayerSolution();
+    }
+    else {
+        cout << "Status: Game in progress." << endl;
     }
 }
 
@@ -455,6 +471,33 @@ bool GameBoard::countSolutionsRecursive(int& numSolutions, int maxSolutions)
     // All cells are filled, solution found
     numSolutions++;
     return false; // Continue to count more solutions
+}
+
+void GameBoard::checkPlayerSolution()
+{
+    int row = 0,
+        col = 0;
+
+    bool testCell = true;
+
+    for (row = 0; row < 9; ++row) {
+        for (col = 0; col < 9; ++col) {
+            if (this->mGameCells[row][col].getValue() != this->mGameCells[row][col].getCorrectValue() && 
+                this->mGameCells[row][col].getCorrectValue() != 0) {
+                testCell = false;
+                cout << "Cell: " << row + 1 << ", " << col + 1 << " has an issue." << 
+                    " Correct value: " << this->mGameCells[row][col].getCorrectValue() << endl;
+                break;
+            }
+        }
+    }
+
+    if (testCell == false) {
+        cout << "Status: This solution isn't correct." << endl;
+    }
+    else {
+        cout << "Status: Solution is correct. Congratulations!" << endl;
+    }
 }
 
 void GameBoard::setFixedNums()

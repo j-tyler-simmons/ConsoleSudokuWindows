@@ -1,2 +1,3 @@
-﻿  Game.cpp
+﻿  Menu.cpp
+C:\Users\simmo\source\repos\ConsoleSudoku\ConsoleSudoku\Menu.cpp(228,54): warning C4267: 'argument': conversion from 'size_t' to 'const int', possible loss of data
   ConsoleSudoku.vcxproj -> C:\Users\simmo\source\repos\ConsoleSudoku\x64\Debug\ConsoleSudoku.exe

@@ -1,3 +1,4 @@
+#pragma once
 #include "Cell.hpp"
 #include <iostream>
 using std::string;
@@ -26,6 +27,7 @@ class GameBoard {
 		int getGameCellCorrectValue(const int xPos, const int yPos) const;
 		bool getIsCellFixed(const int xPos, const int yPos) const;
 		bool getIsCellCorrect(const int xPos, const int yPos) const;
+		bool getIsCellWrong(const int xPos, const int yPos) const;
 		int getHiLightX() const;
 		int getHiLightY() const;
 		double getNumFilled() const;
@@ -41,6 +43,7 @@ class GameBoard {
 		void setNumFilled(const double num);
 		void setNumBoard(const double num);
 		void setNumSolutions(const int solutions);
+		void makeCellWrong(const int xPos, const int yPos);
 
 		//public member functions
 		void displayBoard();
@@ -52,6 +55,7 @@ class GameBoard {
 		void updateStats();
 		void countSolutions(int maxSolutions);
 		bool countSolutionsRecursive(int& numSolutions, int maxSolutions);
+		void checkPlayerSolution();
 		//bool solve();
 
 	private:
